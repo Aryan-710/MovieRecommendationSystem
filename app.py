@@ -5,23 +5,21 @@ import pickle
 @st.cache_resource
 def load_model():
     with open('movie_recommender.pkl', 'rb') as f:
-        knn, movies = pickle.load(f)
-    return knn, movies
+        movies, knn = pickle.load(f)  # ✅ Fix: correct order
+    return movies, knn
 
-knn, movies = load_model()
+movies, knn = load_model()
 
 # Recommendation logic using KNN
 def recommend(movie_title):
     movie_title = movie_title.lower()
     if movie_title not in movies['title'].str.lower().values:
         return ["❌ Movie not found. Try a different title."]
-    
+
     index = movies[movies['title'].str.lower() == movie_title].index[0]
     distances, indices = knn.kneighbors(knn._fit_X[index], n_neighbors=6)
     recommended_indices = indices[0][1:]  # skip input movie itself
     return movies.iloc[recommended_indices]['title'].tolist()
-
-
 
 st.title("🎬 Movie Recommender System")
 
