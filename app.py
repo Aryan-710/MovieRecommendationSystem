@@ -1,36 +1,34 @@
 import streamlit as st
 import pickle
 
-# Load model and data
+# Load the model and data
 @st.cache_resource
 def load_model():
     with open('movie_recommendation.pkl', 'rb') as f:
         knn, movies, csr_data = pickle.load(f)
-    return knn, movies, csr_data
+    return knn, movies.reset_index(drop=True), csr_data
 
 knn, movies, csr_data = load_model()
 
-# Movie recommendation logic
+# Map titles to row numbers (length matches csr_data)
+# ASSUMPTION: First N rows of `movies` are used in model
+title_to_index = {
+    title.lower(): idx for idx, title in enumerate(movies['title'][:csr_data.shape[0]].fillna(''))
+}
+
+# Recommend function
 def recommend(movie_title):
-    movie_title = movie_title.lower()
-    matched = movies[movies['title'].str.lower() == movie_title]
+    movie_title = movie_title.lower().strip()
 
-    if matched.empty:
-        return ["❌ Movie not found. Try a different title."]
+    if movie_title not in title_to_index:
+        return ["❌ Movie not found or not supported for recommendation."]
 
-    # Get proper row number from the DataFrame (assuming index is reset!)
-    row_num = matched.index[0]
-
-    # Index safety check
-    if row_num >= csr_data.shape[0]:
-        return ["❌ Index mismatch between movie data and model. Please retrain."]
-
-    # Perform recommendation
+    row_num = title_to_index[movie_title]
     distances, indices = knn.kneighbors(csr_data.getrow(row_num), n_neighbors=6)
-    recommended_indices = indices[0][1:]  # Skip input movie
+    recommended_indices = indices[0][1:]
     return movies.iloc[recommended_indices]['title'].tolist()
 
-# Streamlit UI
+# Streamlit app UI
 st.title("🎬 Movie Recommender System")
 
 titles = sorted(movies['title'].dropna().astype(str).tolist())
@@ -41,3 +39,4 @@ if st.button("Recommend"):
     st.subheader("🎥 Recommended Movies:")
     for movie in recommendations:
         st.write("👉", movie)
+
