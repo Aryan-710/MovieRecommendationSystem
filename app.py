@@ -4,7 +4,7 @@ import pickle
 # Load model and data
 @st.cache_resource
 def load_model():
-    with open('movie_recommender.pkl', 'rb') as f:
+    with open('movie_recommendation.pkl', 'rb') as f:
         knn, movies, csr_data = pickle.load(f)  # ✅ Unpack all 3
     return knn, movies, csr_data
 
