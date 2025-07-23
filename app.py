@@ -8,7 +8,7 @@ def load_model():
         movies, knn = pickle.load(file)
     return movies, similarity
 
-movies, similarity = load_model()
+movies, knn = load_model()
 
 # Recommend movies based on title
 def recommend(movie_title):
