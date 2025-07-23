@@ -17,7 +17,7 @@ def recommend(movie_title):
         return ["❌ Movie not found. Try a different title."]
 
     index = movies[movies['title'].str.lower() == movie_title].index[0]
-    distances, indices = knn.kneighbors(knn._fit_X[index], n_neighbors=6)
+    distances, indices = knn.kneighbors(knn._fit_X[[index]], n_neighbors=6)  # ✅ FIXED HERE
     recommended_indices = indices[0][1:]  # skip input movie itself
     return movies.iloc[recommended_indices]['title'].tolist()
 
