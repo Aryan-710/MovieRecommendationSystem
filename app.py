@@ -1,7 +1,6 @@
 import streamlit as st
 import pickle
 
-# Load model and data
 @st.cache_resource
 def load_model():
     with open('movie_recommendation.pkl', 'rb') as f:
@@ -10,23 +9,20 @@ def load_model():
 
 knn, movies, csr_data = load_model()
 
-# Recommendation logic using KNN
 def recommend(movie_title):
     movie_title = movie_title.lower()
-
-    # Find the row number (not DataFrame index!)
     matched = movies[movies['title'].str.lower() == movie_title]
+    
     if matched.empty:
         return ["❌ Movie not found. Try a different title."]
     
-    row_num = matched.index[0]  # safe index from dataframe
-    row_num = movies.reset_index().index[movies['title'].str.lower() == movie_title][0]  # force reset indexing
-
-    distances, indices = knn.kneighbors(csr_data[row_num], n_neighbors=6)
-    recommended_indices = indices[0][1:]  # skip input movie itself
+    row_num = matched.index[0]
+    
+    # ✅ FIX: get correct sparse row
+    distances, indices = knn.kneighbors(csr_data.getrow(row_num), n_neighbors=6)
+    recommended_indices = indices[0][1:]  # Skip the input movie itself
     return movies.iloc[recommended_indices]['title'].tolist()
 
-# App UI
 st.title("🎬 Movie Recommender System")
 
 titles = sorted(movies['title'].dropna().astype(str).tolist())
