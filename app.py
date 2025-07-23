@@ -1,16 +1,16 @@
 import streamlit as st
 import pickle
 
-# Load the saved model and data
+# Load the saved KNN model and movies DataFrame
 @st.cache_resource
 def load_model():
     with open('movie_recommender.pkl', 'rb') as file:
-        movies, knn = pickle.load(file)
-    return movies, similarity
+        knn, movies = pickle.load(file)
+    return knn, movies
 
-movies, knn = load_model()
+knn, movies = load_model()
 
-# Recommend movies based on title
+# Recommend using NearestNeighbors model
 def recommend(movie_title):
     movie_title = movie_title.lower()
 
@@ -18,12 +18,12 @@ def recommend(movie_title):
         return ["❌ Movie not found. Try a different title."]
 
     index = movies[movies['title'].str.lower() == movie_title].index[0]
-    distances = list(enumerate(similarity[index]))
-    recommended_indices = sorted(distances, key=lambda x: x[1], reverse=True)[1:6]
-    recommended_movies = movies['title'].iloc[[i[0] for i in recommended_indices]].tolist()
+
+    distances, indices = knn.kneighbors(knn._fit_X[index], n_neighbors=6)
+    recommended_indices = indices[0][1:]  # Skip the input movie itself
+    recommended_movies = movies.iloc[recommended_indices]['title'].tolist()
 
     return recommended_movies
-
 
 
 st.title("🎬 Movie Recommendation App")
